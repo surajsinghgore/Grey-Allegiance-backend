@@ -11,11 +11,6 @@ export const adminRegisterValidation = [
     .withMessage("Only Gmail accounts are allowed.")
     .normalizeEmail(),
 
-  body("mobile")
-    .isLength({ min: 10, max: 10 })
-    .withMessage("Mobile number must be exactly 10 digits long.")
-    .isNumeric()
-    .withMessage("Mobile number must contain only digits."),
 
   body("password")
     .isLength({ min: 5 })
@@ -59,4 +54,26 @@ export const changePasswordValidation = [
     .matches(/[\W_]/)
     .withMessage("New password must contain at least one special character.")
     .trim(),
+];
+
+
+export const updateAdminValidation = [
+  body("email").isEmail().withMessage("Valid email is required"),
+  
+  body("status")
+    .optional()
+    .isIn(["active", "inactive"])
+    .withMessage("Invalid status, please enter active or inactive status"),
+  
+  body("permission")
+    .optional()
+    .isIn(["all", "read"])
+    .withMessage("Invalid permission,please enter all or read in permission"),
+  
+  body().custom((value) => {
+    if (!value.status && !value.permission) {
+      throw new Error("At least one field (status or permission) must be provided");
+    }
+    return true;
+  }),
 ];

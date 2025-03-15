@@ -3,12 +3,15 @@ import {
   registerAdmin,
   loginAdmin,
   changeAdminPassword,
+  updateAdminRole,
 } from "../controller/Admin.controller.js";
 import {
   adminRegisterValidation,
   adminLoginValidation,
   changePasswordValidation,
+  updateAdminValidation,
 } from "../validators/Admin.validator.js";
+import { AdminVerifyMiddleware } from "../middlewares/AdminVerify.middleware.js";
 
 const router = express.Router();
 
@@ -20,5 +23,10 @@ router.post("/login", adminLoginValidation, loginAdmin);
 
 // Change Password
 router.patch("/change-password", changePasswordValidation, changeAdminPassword);
+
+// change status
+router.put("/update-role",  AdminVerifyMiddleware,updateAdminValidation, updateAdminRole);
+
+
 
 export default router;

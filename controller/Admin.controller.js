@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { validationResult } from "express-validator";
 import Admin from "../models/Admin.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 
 // [POST] - Register Admin
@@ -13,10 +14,10 @@ export const registerAdmin = async (req, res) => {
     }
 
     try {
-        const { name, email, password, mobile, permission } = req.body;
+        const { name, email, password, permission } = req.body;
         let admin = await Admin.findOne({ email });
         if (admin) return res.status(400).json({ message: "Admin already exists" });
-        admin = new Admin({ name, email, password, mobile, permission });
+        admin = new Admin({ name, email, password, permission });
         await admin.save();
 
         res.status(201).json({ message: "Admin registered successfully", admin });
@@ -51,6 +52,10 @@ export const loginAdmin = async (req, res) => {
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
+        if (admin.status !== "active") {
+            return res.status(403).json({ message: "Admin account is inactive" });
+        }
+        
         // Generate JWT token
         const token = jwt.sign({ id: admin._id, permission: admin.permission }, process.env.JWT_SECRET, {
             expiresIn: "1d",
@@ -96,3 +101,45 @@ export const changeAdminPassword = async (req, res) => {
     }
 };
 
+// [PUT] - Update Admin Status or Role
+export const updateAdminRole = asyncHandler(async (req, res) => {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+  
+    try {
+      const { email, status, permission } = req.body;
+  
+      // Ensure only admins with "all" permission can update roles
+      if (req.user.permission !== "all") {
+        return res.status(403).json({ status: false, message: "Forbidden: You do not have permission to update admin roles" });
+      }
+  
+      // Find admin by email
+      const admin = await Admin.findOne({ email });
+  
+      if (!admin) {
+        return res.status(404).json({ status: false, message: "Admin not found" });
+      }
+  
+      // Update only provided fields (status or permission or both)
+      if (status) admin.status = status;
+      if (permission) admin.permission = permission;
+  
+      await admin.save();
+  
+      res.status(200).json({
+        status: true,
+        message: "Admin role updated successfully",
+        admin: { email: admin.email, status: admin.status, permission: admin.permission },
+      });
+    } catch (error) {
+      res.status(500).json({ status: false, message: "Server error", error: error.message });
+    }
+  });
+
+
+
+  
