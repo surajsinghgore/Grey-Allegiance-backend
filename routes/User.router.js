@@ -1,6 +1,6 @@
 import express from 'express';
-import { changePassword, getCurrentActiveUserData, getCurrentUserActivity, loginUser, registerUser } from '../controller/User.controller.js';
-import { changePasswordValidation, loginUserValidation, registerUserValidation } from '../validators/User.validator.js';
+import { changePassword, forgotPassword, getCurrentActiveUserData, getCurrentUserActivity, loginUser, registerUser, validateResetToken } from '../controller/User.controller.js';
+import { changePasswordValidation, loginUserValidation, registerUserValidation, validatePasswordReset } from '../validators/User.validator.js';
 import { UserVerifyMiddleware } from '../middlewares/UserVerify.middleware.js';
 
 const router = express.Router();
@@ -11,5 +11,6 @@ router.patch('/change-password', UserVerifyMiddleware, changePasswordValidation,
 
 router.get("/user-activity", UserVerifyMiddleware, getCurrentUserActivity);
 router.get("/get-me", UserVerifyMiddleware, getCurrentActiveUserData);
-
+router.post("/forgot-password", forgotPassword);
+router.patch('/reset-password',validatePasswordReset,validateResetToken);
 export default router;
