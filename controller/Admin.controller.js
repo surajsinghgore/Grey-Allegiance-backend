@@ -34,6 +34,7 @@ export const registerAdmin = async (req, res) => {
 };
 
 
+
 // [POST] - Login Admin
 export const loginAdmin = async (req, res) => {
     // Check validation errors
@@ -68,6 +69,7 @@ export const loginAdmin = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 // [PATCH] - Change Admin Password
 export const changeAdminPassword = async (req, res) => {
