@@ -17,6 +17,7 @@ import serviceRouter from "./routes/Services.router.js";
 import bookingRouter from "./routes/Booking.router.js";
 import joinUsRouter from "./routes/JoinUs.router.js";
 import requestQuoteRouter from "./routes/requestQuote.router.js";
+import blogRouter from "./routes/Blog.router.js";
 
 
 // Routes declaration
@@ -25,5 +26,6 @@ app.use("/api/v1/service", serviceRouter);
 app.use("/api/v1/booking", bookingRouter);
 app.use("/api/v1/joinUs", joinUsRouter);
 app.use("/api/v1/requestQuote", requestQuoteRouter);
+app.use("/api/v1/blog",blogRouter);
 
 export { app };
