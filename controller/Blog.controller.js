@@ -131,7 +131,7 @@ export const getBlogByIdAdmin = async (req, res) => {
 export const updateBlogById = async (req, res) => {
     try {
         if (req.user?.permission !== "all") {
-            return res.status(403).json({ message: "You do not have permission to create a blog" });
+            return res.status(403).json({ message: "You do not have permission to update a blog" });
         }
 
         const blogId = req.params.id; 

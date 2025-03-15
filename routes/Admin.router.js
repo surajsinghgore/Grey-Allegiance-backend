@@ -4,6 +4,7 @@ import {
   loginAdmin,
   changeAdminPassword,
   updateAdminRole,
+  getCurrentAdminInfo,
 } from "../controller/Admin.controller.js";
 import {
   adminRegisterValidation,
@@ -27,6 +28,6 @@ router.patch("/change-password", changePasswordValidation, changeAdminPassword);
 // change status
 router.put("/update-role",  AdminVerifyMiddleware,updateAdminValidation, updateAdminRole);
 
-
+router.get("/get-me", AdminVerifyMiddleware, getCurrentAdminInfo);
 
 export default router;

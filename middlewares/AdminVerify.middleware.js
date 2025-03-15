@@ -2,36 +2,34 @@ import jwt from "jsonwebtoken";
 import Admin from "../models/Admin.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// Middleware to verify admin's JWT token and check permissions
 export const AdminVerifyMiddleware = asyncHandler(async (req, res, next) => {
   try {
+    // Get token from cookies or authorization header
     const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
       return res.status(401).json({ status: false, message: "Unauthorized request: No token provided" });
     }
 
+    // Verify the token
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-    const admin = await Admin.findById(decodedToken?.id).select("_id email mobile permission name isVerified tokenVersion");
+    // Find the admin using the ID from the token
+    const admin = await Admin.findById(decodedToken?.id).select("_id email mobile permission name status");
 
     if (!admin) {
       return res.status(401).json({ status: false, message: "Unauthorized request: Admin not found" });
     }
 
-  
-    if (decodedToken.tokenVersion !== admin.tokenVersion) {
-      return res.status(401).json({
-        status: false,
-        message: "Unauthorized request: Token is invalid due to a new login session",
-      });
+    if (admin.status !== "active") {
+      return res.status(403).json({ status: false, message: "Admin account is inactive" });
     }
 
-    // Check if the admin has permission to proceed
     if (!admin.permission || !["all", "read"].includes(admin.permission)) {
       return res.status(403).json({ status: false, message: "Forbidden: Insufficient permissions" });
     }
 
-    // Attach the admin details to `req.user`
     req.user = { ...admin.toObject(), permission: admin.permission };
 
     next();

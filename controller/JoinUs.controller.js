@@ -78,7 +78,7 @@ export const getPendingJoinUsRequests = async (req, res) => {
 export const updateJoinUsStatus = async (req, res) => {
     try {
         if (req.user?.permission !== "all") {
-            return res.status(403).json({ message: "You do not have permission to update a service" });
+            return res.status(403).json({ message: "You do not have permission to update a join us form" });
         }
         const { id } = req.params;
         const { status } = req.body; 

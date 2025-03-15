@@ -141,3 +141,28 @@ export const updateAdminRole = asyncHandler(async (req, res) => {
 
 
 
+
+  export const getCurrentAdminInfo = asyncHandler(async (req, res) => {
+    try {
+      const admin = req.user;
+  
+      if (!admin) {
+        return res.status(404).json({ status: false, message: "Admin not found" });
+      }
+  
+      res.status(200).json({
+        status: true,
+        message: "Admin info retrieved successfully",
+        data: {
+          _id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          mobile: admin.mobile,
+          permission: admin.permission,
+          status: admin.status,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ status: false, message: "Server error", error: error.message });
+    }
+  });

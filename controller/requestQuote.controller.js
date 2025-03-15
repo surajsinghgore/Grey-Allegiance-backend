@@ -41,7 +41,7 @@ export const createRequestQuote = async (req, res) => {
 export const updateRequestQuoteStatus = async (req, res) => {
     try {
         if (req.user?.permission !== "all") {
-            return res.status(403).json({ message: "You do not have permission to update a service" });
+            return res.status(403).json({ message: "You do not have permission to update request quote" });
         }
         const { id } = req.params;
         const { status } = req.body;
