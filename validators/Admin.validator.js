@@ -33,8 +33,8 @@ export const adminRegisterValidation = [
   body("permission")
     .isString()
     .withMessage("Permission must be a string.")
-    .isIn(["all", "read", "update", "create", "delete"])
-    .withMessage("Invalid permission. Allowed values: all, read, update, create, delete."),
+    .isIn(["all", "read"])
+    .withMessage("Invalid permission. Allowed values: all, read."),
 ];
 
 // Admin Login Validation

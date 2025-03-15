@@ -19,6 +19,6 @@ router.post("/register", adminRegisterValidation, registerAdmin);
 router.post("/login", adminLoginValidation, loginAdmin);
 
 // Change Password
-router.post("/change-password", changePasswordValidation, changeAdminPassword);
+router.patch("/change-password", changePasswordValidation, changeAdminPassword);
 
 export default router;

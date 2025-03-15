@@ -14,17 +14,9 @@ export const registerAdmin = async (req, res) => {
 
     try {
         const { name, email, password, mobile, permission } = req.body;
-
-        // Check if admin already exists
         let admin = await Admin.findOne({ email });
         if (admin) return res.status(400).json({ message: "Admin already exists" });
-
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create new admin
-        admin = new Admin({ name, email, password: hashedPassword, mobile, permission });
+        admin = new Admin({ name, email, password, mobile, permission });
         await admin.save();
 
         res.status(201).json({ message: "Admin registered successfully", admin });
@@ -90,9 +82,12 @@ export const changeAdminPassword = async (req, res) => {
         const isMatch = await bcrypt.compare(oldPassword, admin.password);
         if (!isMatch) return res.status(400).json({ message: "Incorrect old password" });
 
-        // Hash new password and save
-        const salt = await bcrypt.genSalt(10);
-        admin.password = await bcrypt.hash(newPassword, salt);
+        // Check if the new password is the same as the old password
+        const isSamePassword = await bcrypt.compare(newPassword, admin.password);
+        if (isSamePassword) return res.status(400).json({ message: "New password must be different from the old password" });
+
+        // Assign new password (will be hashed by the schema pre-save hook)
+        admin.password = newPassword;
         await admin.save();
 
         res.status(200).json({ message: "Password changed successfully" });
@@ -100,3 +95,4 @@ export const changeAdminPassword = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
