@@ -112,7 +112,6 @@ export const updateAdminRole = asyncHandler(async (req, res) => {
     try {
       const { email, status, permission } = req.body;
   
-      // Ensure only admins with "all" permission can update roles
       if (req.user.permission !== "all") {
         return res.status(403).json({ status: false, message: "Forbidden: You do not have permission to update admin roles" });
       }
@@ -142,4 +141,3 @@ export const updateAdminRole = asyncHandler(async (req, res) => {
 
 
 
-  

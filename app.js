@@ -13,8 +13,10 @@ app.get("/", (req, res) => {
 
 // Routes import
 import adminRouter from "./routes/Admin.router.js";
+import serviceRouter from "./routes/Services.router.js";
 
 // Routes declaration
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/service", serviceRouter);
 
 export { app };
