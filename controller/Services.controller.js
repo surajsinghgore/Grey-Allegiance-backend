@@ -1,6 +1,5 @@
 import Service from "../models/Services.model.js";
 
-// create service
 export const createService = async (req, res) => {
     try {
         if (req.user?.permission !== "all") {
@@ -100,3 +99,47 @@ export const deleteServiceById = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+
+export const getAllServices = async (req, res) => {
+    try {
+        const services = await Service.find({}, "imageUrl title description slotDuration price");
+
+        if (!services || services.length === 0) {
+            return res.status(404).json({ message: "No services found" });
+        }
+
+        // Renaming slotDuration to slotsAvailable in the response
+        const formattedServices = services.map(service => ({
+            imageUrl: service.imageUrl,
+            title: service.title,
+            description: service.description,
+            slotsAvailable: service.slotDuration, // Renamed field
+            price: service.price
+        }));
+
+        res.status(200).json({ message: "Services retrieved successfully", services: formattedServices });
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+
+export const getServiceById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const service = await Service.findById(id);
+
+        if (!service) {
+            return res.status(404).json({ message: "Service not found" });
+        }
+
+        res.status(200).json({ message: "Service retrieved successfully", service });
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
