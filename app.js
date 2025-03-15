@@ -8,7 +8,7 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-    res.send("Welcome to the ClinicCare API!");
+    res.send("Welcome to the Grey Allegiance Backend Api!");
 });
 
 // Routes import
