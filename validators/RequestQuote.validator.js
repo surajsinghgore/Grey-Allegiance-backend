@@ -1,6 +1,6 @@
 import { body } from "express-validator";
 
-export const validateRequestQuote = [
+export const validateRequestQuoteForm = [
   body("firstName").notEmpty().withMessage("First name is required"),
 
   body("lastName").notEmpty().withMessage("Last name is required"),
