@@ -8,7 +8,7 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-    res.send("Welcome to the Grey Allegiance Backend Api!");
+    res.send("Welcome to the Grey Allegiance Backend Api staging!");
 });
 
 // Routes import
