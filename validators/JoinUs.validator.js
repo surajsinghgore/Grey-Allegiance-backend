@@ -13,6 +13,4 @@ export const validateJoinUs = [
 
   body("whyJoinUs").notEmpty().withMessage("Reason for joining is required"),
 
-  body("resume").notEmpty().withMessage("Resume URL is required")
-    .isURL().withMessage("Valid resume URL is required"),
-];
+ ];

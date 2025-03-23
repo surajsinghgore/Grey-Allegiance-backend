@@ -1,43 +1,60 @@
 import JoinUs from "../models/JoinUs.model.js";
+import { v2 as cloudinary } from "cloudinary";
+import { uploadResumeToCloudinary } from "../utils/Cloudinary.js";
 
+  
 // Create a new JoinUs entry
 export const createJoinUs = async (req, res) => {
     try {
-        const { name, email, mobile, aboutYou, whyJoinUs, resume } = req.body;
+        const { name, email, mobile, aboutYou, whyJoinUs } = req.body;
+        let resumeUrl;
 
         // Validate required fields
-        if (!name || !email || !mobile || !aboutYou || !whyJoinUs || !resume) {
+        if (!name || !email || !mobile || !aboutYou || !whyJoinUs) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        // Check if the user has already applied with the same email, mobile, and status "pending"
+        // Check if user already applied
         const existingApplication = await JoinUs.findOne({ email, mobile, status: "pending" });
-
         if (existingApplication) {
             return res.status(400).json({ message: "You have already applied. Your application is under review." });
         }
 
-        // Create a new entry in the database
+        // Upload resume
+        if (req.file) {
+            const uploadResponse = await uploadResumeToCloudinary(req.file.path);
+            if (uploadResponse.statusCode === 200) {
+                resumeUrl = uploadResponse.data.secure_url;
+            } else {
+                return res.status(uploadResponse.statusCode).json({
+                    success: false,
+                    message: uploadResponse.message,
+                });
+            }
+        } else {
+            return res.status(400).json({ success: false, message: "Please upload a resume." });
+        }
+
+        // Save application in DB
         const newJoinUs = new JoinUs({
             name,
             email,
             mobile,
             aboutYou,
             whyJoinUs,
-            resume, // Resume file URL
-            appliedDate: new Date().toISOString().split("T")[0], // YYYY-MM-DD
-            appliedTime: new Date().toTimeString().split(" ")[0], // HH:MM:SS
+            resume: resumeUrl,
+            appliedDate: new Date().toISOString().split("T")[0],
+            appliedTime: new Date().toTimeString().split(" ")[0],
         });
 
         await newJoinUs.save();
-
         res.status(201).json({ message: "Application submitted successfully", data: newJoinUs });
+
     } catch (error) {
         console.error("Error submitting application:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
-
 
 export const getAllJoinUsRequests = async (req, res) => {
     try {
