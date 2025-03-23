@@ -1,5 +1,5 @@
 import express from 'express';
-import { createBlog, deleteBlogById, getAllBlogs, getAllBlogsAdmin, getBlogById, getBlogByIdAdmin, updateBlogById } from '../controller/Blog.controller.js';
+import { createBlog, deleteBlogById, getAllBlogs, getAllBlogsAdmin, getBlogById, getBlogByIdAdmin, updateBlogById, uploadBlogThumbnailApi } from '../controller/Blog.controller.js';
 import { blogValidator } from '../validators/Blog.validator.js';
 import { AdminVerifyMiddleware } from '../middlewares/AdminVerify.middleware.js';
 import { upload } from '../middlewares/mutlerMiddleware.js';
@@ -44,6 +44,32 @@ router.post(
 );
 
 
+
+router.patch(
+    "/update-thumbnail",
+    AdminVerifyMiddleware,  
+    upload.single("thumbnail"), 
+    (req, res, next) => {                  
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Thumbnail is required. Please upload a valid image.",
+            });
+        }
+
+        const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+        if (!allowedMimeTypes.includes(req.file.mimetype)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid file format. Only JPG, PNG, GIF, and WEBP files are allowed.",
+            });
+        }
+
+        next(); 
+    }, 
+    uploadBlogThumbnailApi  
+  );
 
 router.get('/all', getAllBlogs);
 router.get('/all/:id', getBlogById);

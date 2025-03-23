@@ -2,7 +2,9 @@
 import slugify from 'slugify';
 import Blog from '../models/Blog.model.js';
 import { uploadThumbnailToCloudinary } from '../utils/cloudinarySetup..js';
-
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { getPublicIdFromUrl } from '../utils/Halper.js';
+import { v2 as cloudinary } from "cloudinary";
 
 
 export const createBlog = async (req, res) => {
@@ -34,7 +36,7 @@ export const createBlog = async (req, res) => {
         const slug = slugify(title, { lower: true, strict: true });
 
         const newBlog = new Blog({
-            thumbnailUrl: uploadResult.data.secure_url, // Use the Cloudinary URL
+            thumbnailUrl: uploadResult.data.secure_url,
             title,
             content,
             categories,
@@ -212,3 +214,68 @@ export const deleteBlogById = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+
+
+export const uploadBlogThumbnailApi = asyncHandler(async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload a blog thumbnail image.",
+            });
+        }
+
+        const { blogId } = req.query; 
+
+        // Validate blog ID
+        if (!blogId) {
+            return res.status(400).json({
+                success: false,
+                message: "Blog ID is required to update the thumbnail.",
+            });
+        }
+
+        // Find the blog
+        const blog = await Blog.findById(blogId);
+
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found.",
+            });
+        }
+
+        if (blog.thumbnailUrl) {
+            const publicId = getPublicIdFromUrl(blog.thumbnailUrl);
+            await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+        }
+
+        const uploadResponse = await uploadThumbnailToCloudinary(req.file.path);
+
+        if (uploadResponse.statusCode !== 200) {
+            return res.status(uploadResponse.statusCode).json({
+                success: false,
+                message: uploadResponse.message,
+                error: uploadResponse.error,
+            });
+        }
+
+        blog.thumbnailUrl = uploadResponse.data.secure_url;
+        await blog.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Blog thumbnail updated successfully.",
+            thumbnailUrl: uploadResponse.data.secure_url,
+        });
+    } catch (error) {
+        console.error("Error uploading blog thumbnail: ", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Error in uploading blog thumbnail.",
+            error: error.message,
+        });
+    }
+});
