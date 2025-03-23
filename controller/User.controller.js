@@ -8,6 +8,9 @@ import JoinUs from "../models/JoinUs.model.js";
 import RequestQuote from "../models/RequestQuote.model.js";
 import { generateForgotPasswordEmail } from '../utils/EmailTemplate/UserTemplate.js';
 import { sendEmail } from '../handlers/SendEmail.js';
+
+
+
 export const registerUser = async (req, res) => {
     try {
         const errors = validationResult(req);

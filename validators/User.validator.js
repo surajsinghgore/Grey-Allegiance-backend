@@ -4,21 +4,19 @@ import { body } from 'express-validator';
 export const registerUserValidation = [
     body('name').not().isEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Please enter a valid email'),
-    body('mobile').isLength({ min: 10, max: 15 }).withMessage('Mobile number must be between 10 and 15 digits'),
-    body('address').not().isEmpty().withMessage('Address is required'),
-    body('pincode').isLength({ min: 6, max: 6 }).withMessage('Pincode must be 6 digits'),
+    body('mobile').isLength({ min: 10 }).withMessage('Mobile number must be at least 10 digits'),
     body("password")
-    .isLength({ min: 5 })
-    .withMessage("Password must be at least 5 characters long.")
-    .matches(/[A-Z]/)
-    .withMessage("Password must contain at least one uppercase letter.")
-    .matches(/[a-z]/)
-    .withMessage("Password must contain at least one lowercase letter.")
-    .matches(/[0-9]/)
-    .withMessage("Password must contain at least one number.")
-    .matches(/[\W_]/)
-    .withMessage("Password must contain at least one special character.")
-    .trim(),
+        .isLength({ min: 5 })
+        .withMessage("Password must be at least 5 characters long.")
+        .matches(/[A-Z]/)
+        .withMessage("Password must contain at least one uppercase letter.")
+        .matches(/[a-z]/)
+        .withMessage("Password must contain at least one lowercase letter.")
+        .matches(/[0-9]/)
+        .withMessage("Password must contain at least one number.")
+        .matches(/[\W_]/)
+        .withMessage("Password must contain at least one special character.")
+        .trim(),
 ];
 
 
