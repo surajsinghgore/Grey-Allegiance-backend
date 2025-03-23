@@ -1,36 +1,47 @@
 
 import slugify from 'slugify';
 import Blog from '../models/Blog.model.js';
+import { uploadThumbnailToCloudinary } from '../utils/cloudinarySetup..js';
+
+
 
 export const createBlog = async (req, res) => {
     try {
         if (req.user?.permission !== "all") {
             return res.status(403).json({ message: "You do not have permission to create a blog" });
         }
+        const author = req.user._id;
+        const { title, content, categories, tags, status } = req.body;
 
-        const { thumbnailUrl, title, content, categories, tags, author, status } = req.body;
-
-        if (!thumbnailUrl || !title || !content || !author) {
-            return res.status(400).json({ message: "Thumbnail URL, title, content, and author are required" });
+        if (!req.file || !title || !content ) {
+            return res.status(400).json({ message: "Thumbnail, title, content are required" });
         }
 
-        const existingBlog = await Blog.findOne({ title: title });
+        // Check if a blog with the same title already exists
+        const existingBlog = await Blog.findOne({ title });
 
         if (existingBlog) {
             return res.status(400).json({ message: "A blog with this title already exists" });
         }
 
+        // Upload the thumbnail to Cloudinary
+        const uploadResult = await uploadThumbnailToCloudinary(req.file.path);
+
+        if (uploadResult.statusCode !== 200) {
+            return res.status(500).json({ message: "Error uploading thumbnail", error: uploadResult.error });
+        }
+
         const slug = slugify(title, { lower: true, strict: true });
 
         const newBlog = new Blog({
-            thumbnailUrl,
+            thumbnailUrl: uploadResult.data.secure_url, // Use the Cloudinary URL
             title,
             content,
             categories,
             tags,
             author,
-            status: status || 'active', 
-            slug 
+            status: status || "active",
+            slug
         });
 
         await newBlog.save();
@@ -44,6 +55,7 @@ export const createBlog = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 export const getAllBlogs = async (req, res) => {
     try {
@@ -134,7 +146,7 @@ export const updateBlogById = async (req, res) => {
             return res.status(403).json({ message: "You do not have permission to update a blog" });
         }
 
-        const blogId = req.params.id; 
+        const blogId = req.params.id;
         const { thumbnailUrl, title, content, categories, tags, status } = req.body;
 
         // Find the blog by ID

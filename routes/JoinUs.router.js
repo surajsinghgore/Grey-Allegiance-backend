@@ -10,16 +10,14 @@ const router = express.Router();
 
 router.post(
     "/apply",
-    upload.single("resume"), 
-    validateJoinUs, 
+    upload.single("resume"),
+    validateJoinUs,
     (req, res, next) => {
-        // Validate request body
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ success: false, message: errors.array() });
         }
 
-        // Validate file presence
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -27,7 +25,6 @@ router.post(
             });
         }
 
-        // Validate resume format
         const allowedMimeTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
         if (!allowedMimeTypes.includes(req.file.mimetype)) {
             return res.status(400).json({
@@ -36,7 +33,7 @@ router.post(
             });
         }
 
-        next(); 
+        next();
     },
     createJoinUs
 );
