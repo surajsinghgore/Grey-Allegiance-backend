@@ -1,6 +1,6 @@
 import JoinUs from "../models/JoinUs.model.js";
 import { v2 as cloudinary } from "cloudinary";
-import { uploadResumeToCloudinary } from "../utils/Cloudinary.js";
+import { uploadResumeToCloudinary } from "../utils/cloudinarySetup..js";
 
   
 // Create a new JoinUs entry
