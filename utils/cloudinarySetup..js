@@ -91,24 +91,24 @@ export const uploadImageToCloudinary = async (file) => {
 
 
 
-export const uploadResumeToCloudinary = async (fileBuffer, mimeType) => {
-  if (!fileBuffer || !mimeType) {
-      return { statusCode: 400, message: "Invalid file provided." };
-  }
+export const uploadResumeToCloudinary = (fileBuffer, mimeType) => {
+  return new Promise((resolve, reject) => {
+      if (!fileBuffer || !mimeType) {
+          return resolve({ statusCode: 400, message: "Invalid file provided." });
+      }
 
-  const allowedMimeTypes = {
-      "application/pdf": ".pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx"
-  };
+      const allowedMimeTypes = {
+          "application/pdf": ".pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx"
+      };
 
-  if (!allowedMimeTypes[mimeType]) {
-      return { statusCode: 400, message: "Invalid file format. Only PDF and DOCX files are allowed." };
-  }
+      if (!allowedMimeTypes[mimeType]) {
+          return resolve({ statusCode: 400, message: "Invalid file format. Only PDF and DOCX files are allowed." });
+      }
 
-  try {
       const uniqueFilename = `resume_${Date.now()}`;
 
-      const response = await cloudinary.uploader.upload_stream(
+      const stream = cloudinary.uploader.upload_stream(
           {
               resource_type: "raw", 
               folder: "greyAllegiance/resumes",
@@ -117,18 +117,16 @@ export const uploadResumeToCloudinary = async (fileBuffer, mimeType) => {
           (error, result) => {
               if (error) {
                   console.error("Cloudinary Upload Error:", error);
-                  return { statusCode: 500, message: "Error uploading resume to Cloudinary.", error };
+                  return reject({ statusCode: 500, message: "Error uploading resume to Cloudinary.", error });
               }
-              return { statusCode: 200, message: "Resume uploaded successfully.", data: result };
+              resolve({ statusCode: 200, message: "Resume uploaded successfully.", data: result });
           }
-      ).end(fileBuffer); 
+      );
 
-      return response;
-  } catch (error) {
-      console.error("Error uploading resume to Cloudinary:", error);
-      return { statusCode: 500, message: "Error uploading resume to Cloudinary.", error: error.message };
-  }
+      stream.end(fileBuffer);
+  });
 };
+
 
 
 
