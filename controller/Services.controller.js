@@ -1,4 +1,5 @@
 import Service from "../models/Services.model.js";
+import { uploadServiceImageToCloudinary, uploadThumbnailToCloudinary } from "../utils/cloudinarySetup..js";
 
 export const createService = async (req, res) => {
     try {
@@ -6,33 +7,64 @@ export const createService = async (req, res) => {
             return res.status(403).json({ message: "You do not have permission to create a service" });
         }
 
-        const { title, description, slotDuration, imageUrl, status, days, price } = req.body;
+        const { title, description, slotDuration, status } = req.body;
+        let price = Number(req.body.price);
 
+        if (!req.file || !title || !description) {
+            return res.status(400).json({ message: "Image, title, and description are required" });
+        }
 
-        if (!days || !Array.isArray(days) || days.length === 0) {
+        // ✅ Parse 'days' if provided
+        let days;
+        try {
+            days = JSON.parse(req.body.days);
+        } catch (error) {
+            return res.status(400).json({ message: "Invalid days format. Must be a JSON array." });
+        }
+
+        if (!Array.isArray(days) || days.length === 0) {
             return res.status(400).json({ message: "Days array cannot be empty" });
         }
 
+        // Check if service with the same title already exists
         const existingService = await Service.findOne({ title });
 
         if (existingService) {
             return res.status(400).json({ message: "Service with this title already exists" });
         }
 
-        if (price !== undefined && (typeof price !== "number" || price < 0)) {
+        // Validate price
+        if (isNaN(price) || price < 0) {
             return res.status(400).json({ message: "Invalid price, must be a non-negative number" });
         }
 
-        const newService = new Service({ title, description, slotDuration, imageUrl, status, days, price });
+        // ✅ Upload Image to Cloudinary using buffer
+        const uploadResult = await uploadServiceImageToCloudinary(req.file);
+
+        if (uploadResult.statusCode !== 200) {
+            return res.status(500).json({ message: "Error uploading image", error: uploadResult.error });
+        }
+
+        // ✅ Create new service
+        const newService = new Service({
+            title,
+            description,
+            slotDuration,
+            imageUrl: uploadResult.data.secure_url,
+            status,
+            days,
+            price
+        });
 
         await newService.save();
 
         res.status(201).json({ message: "Service created successfully", service: newService });
     } catch (error) {
-        console.error("Error:", error.message);
+        console.error("Error creating service:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 
