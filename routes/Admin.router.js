@@ -5,6 +5,8 @@ import {
   changeAdminPassword,
   updateAdminRole,
   getCurrentAdminInfo,
+  getAllAdminsApi,
+  deleteAdminApi,
 } from "../controller/Admin.controller.js";
 import {
   adminRegisterValidation,
@@ -30,4 +32,6 @@ router.put("/update-role",  AdminVerifyMiddleware,updateAdminValidation, updateA
 
 router.get("/get-me", AdminVerifyMiddleware, getCurrentAdminInfo);
 
+router.get("/get-all-admin", AdminVerifyMiddleware, getAllAdminsApi);
+router.get("/delete-admin-api", AdminVerifyMiddleware, deleteAdminApi);
 export default router;

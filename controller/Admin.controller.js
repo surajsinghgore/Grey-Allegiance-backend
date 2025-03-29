@@ -166,3 +166,49 @@ export const updateAdminRole = asyncHandler(async (req, res) => {
       res.status(500).json({ status: false, message: "Server error", error: error.message });
     }
   });
+
+
+
+  // [GET] - Get All Admins
+export const getAllAdminsApi = asyncHandler(async (req, res) => {
+  try {
+      if (req.user.permission !== "all") {
+          return res.status(403).json({ status: false, message: "Forbidden: You do not have permission to view all admins" });
+      }
+
+      const admins = await Admin.find({}, "-password"); // Exclude password from response
+
+      res.status(200).json({
+          status: true,
+          message: "All admins retrieved successfully",
+          data: admins,
+      });
+  } catch (error) {
+      res.status(500).json({ status: false, message: "Server error", error: error.message });
+  }
+});
+
+// [DELETE] - Delete an Admin
+export const deleteAdminApi = asyncHandler(async (req, res) => {
+  try {
+      if (req.user.permission !== "all") {
+          return res.status(403).json({ status: false, message: "Forbidden: You do not have permission to delete admins" });
+      }
+
+      const { email } = req.body;
+
+      const admin = await Admin.findOneAndDelete({ email });
+
+      if (!admin) {
+          return res.status(404).json({ status: false, message: "Admin not found" });
+      }
+
+      res.status(200).json({
+          status: true,
+          message: "Admin deleted successfully",
+          deletedAdmin: { email: admin.email, name: admin.name },
+      });
+  } catch (error) {
+      res.status(500).json({ status: false, message: "Server error", error: error.message });
+  }
+});
