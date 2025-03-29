@@ -17,12 +17,14 @@ export const createJoinUs = async (req, res) => {
         // Check if user already applied
         const existingApplication = await JoinUs.findOne({ email, mobile, status: "pending" });
         if (existingApplication) {
-            return res.status(400).json({ message: "You have already applied. Your application is under review." });
+            return res.status(400).json({
+                message: "You have already applied. Your application is under review.",
+            });
         }
 
-        // Upload resume
+        // Upload resume from memory buffer
         if (req.file) {
-            const uploadResponse = await uploadResumeToCloudinary(req.file.path);
+            const uploadResponse = await uploadResumeToCloudinary(req.file.buffer, req.file.mimetype);
             if (uploadResponse.statusCode === 200) {
                 resumeUrl = uploadResponse.data.secure_url;
             } else {
@@ -49,7 +51,6 @@ export const createJoinUs = async (req, res) => {
 
         await newJoinUs.save();
         res.status(201).json({ message: "Application submitted successfully", data: newJoinUs });
-
     } catch (error) {
         console.error("Error submitting application:", error);
         res.status(500).json({ message: "Server error", error: error.message });

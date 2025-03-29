@@ -91,52 +91,45 @@ export const uploadImageToCloudinary = async (file) => {
 
 
 
-export const uploadResumeToCloudinary = async (localFilePath) => {
-  if (!localFilePath) {
-    return { statusCode: 400, message: "Invalid file path provided." };
+export const uploadResumeToCloudinary = async (fileBuffer, mimeType) => {
+  if (!fileBuffer || !mimeType) {
+      return { statusCode: 400, message: "Invalid file provided." };
   }
 
-  const allowedExtensions = [".pdf", ".docx"];
-  const fileExtension = path.extname(localFilePath).toLowerCase();
+  const allowedMimeTypes = {
+      "application/pdf": ".pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx"
+  };
 
-  // Check if the file format is allowed
-  if (!allowedExtensions.includes(fileExtension)) {
-    return { statusCode: 400, message: "Invalid file format. Only PDF and DOCX files are allowed." };
-  }
-
-  const uniqueFilename = generateUniqueFilename(localFilePath);
-  const fileWithUniqueName = path.join(path.dirname(localFilePath), uniqueFilename);
-
-  if (checkFileExists(fileWithUniqueName)) {
-    return { statusCode: 409, message: `File with the name ${uniqueFilename} already exists locally.` };
+  if (!allowedMimeTypes[mimeType]) {
+      return { statusCode: 400, message: "Invalid file format. Only PDF and DOCX files are allowed." };
   }
 
   try {
-    fs.renameSync(localFilePath, fileWithUniqueName);
+      const uniqueFilename = `resume_${Date.now()}`;
 
-    const response = await cloudinary.uploader.upload(fileWithUniqueName, {
-      resource_type: "raw", // "raw" allows uploading non-image files like PDFs and DOCX
-      folder: "greyAllegiance/resumes",
-    });
+      const response = await cloudinary.uploader.upload_stream(
+          {
+              resource_type: "raw", 
+              folder: "greyAllegiance/resumes",
+              public_id: uniqueFilename
+          },
+          (error, result) => {
+              if (error) {
+                  console.error("Cloudinary Upload Error:", error);
+                  return { statusCode: 500, message: "Error uploading resume to Cloudinary.", error };
+              }
+              return { statusCode: 200, message: "Resume uploaded successfully.", data: result };
+          }
+      ).end(fileBuffer); 
 
-    fs.unlinkSync(fileWithUniqueName); // Remove the local file after upload
-
-    return { statusCode: 200, message: "Resume uploaded successfully.", data: response };
+      return response;
   } catch (error) {
-    console.error("Error uploading resume to Cloudinary:", error);
-
-    // Cleanup: Remove temporary file if upload fails
-    try {
-      if (fs.existsSync(fileWithUniqueName)) {
-        fs.unlinkSync(fileWithUniqueName);
-      }
-    } catch (unlinkError) {
-      console.error("Error removing temporary file:", unlinkError);
-    }
-
-    return { statusCode: 500, message: "Error uploading resume to Cloudinary.", error: error.message };
+      console.error("Error uploading resume to Cloudinary:", error);
+      return { statusCode: 500, message: "Error uploading resume to Cloudinary.", error: error.message };
   }
 };
+
 
 
 export const uploadThumbnailToCloudinary = async (file) => {
