@@ -149,7 +149,7 @@ export const updateBlogById = async (req, res) => {
         }
 
         const blogId = req.params.id;
-        const { thumbnailUrl, title, content, categories, tags, status } = req.body;
+        const {  title, content, categories, tags, status } = req.body;
 
         // Find the blog by ID
         const blog = await Blog.findById(blogId);
@@ -171,7 +171,6 @@ export const updateBlogById = async (req, res) => {
         }
 
         // Update other fields if provided
-        if (thumbnailUrl) blog.thumbnailUrl = thumbnailUrl;
         if (content) blog.content = content;
         if (categories) blog.categories = categories;
         if (tags) blog.tags = tags;
