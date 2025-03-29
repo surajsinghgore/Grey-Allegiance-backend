@@ -12,22 +12,21 @@ export const createBlog = async (req, res) => {
         if (req.user?.permission !== "all") {
             return res.status(403).json({ message: "You do not have permission to create a blog" });
         }
+
         const author = req.user._id;
         const { title, content, categories, tags, status } = req.body;
 
-        if (!req.file || !title || !content ) {
-            return res.status(400).json({ message: "Thumbnail, title, content are required" });
+        if (!req.file || !title || !content) {
+            return res.status(400).json({ message: "Thumbnail, title, and content are required" });
         }
 
-        // Check if a blog with the same title already exists
         const existingBlog = await Blog.findOne({ title });
 
         if (existingBlog) {
             return res.status(400).json({ message: "A blog with this title already exists" });
         }
 
-        // Upload the thumbnail to Cloudinary
-        const uploadResult = await uploadThumbnailToCloudinary(req.file.path);
+        const uploadResult = await uploadThumbnailToCloudinary(req.file);
 
         if (uploadResult.statusCode !== 200) {
             return res.status(500).json({ message: "Error uploading thumbnail", error: uploadResult.error });
@@ -57,6 +56,7 @@ export const createBlog = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 export const getAllBlogs = async (req, res) => {
@@ -226,9 +226,9 @@ export const uploadBlogThumbnailApi = asyncHandler(async (req, res) => {
             });
         }
 
-        const { blogId } = req.query; 
+        const { blogId } = req.query;
 
-        // Validate blog ID
+        // ✅ Validate blog ID
         if (!blogId) {
             return res.status(400).json({
                 success: false,
@@ -236,9 +236,8 @@ export const uploadBlogThumbnailApi = asyncHandler(async (req, res) => {
             });
         }
 
-        // Find the blog
+        // ✅ Find the blog
         const blog = await Blog.findById(blogId);
-
         if (!blog) {
             return res.status(404).json({
                 success: false,
@@ -246,12 +245,14 @@ export const uploadBlogThumbnailApi = asyncHandler(async (req, res) => {
             });
         }
 
+        // ✅ Delete old thumbnail if exists
         if (blog.thumbnailUrl) {
             const publicId = getPublicIdFromUrl(blog.thumbnailUrl);
             await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
         }
 
-        const uploadResponse = await uploadThumbnailToCloudinary(req.file.path);
+        // ✅ Upload new thumbnail (buffer-based)
+        const uploadResponse = await uploadThumbnailToCloudinary(req.file);
 
         if (uploadResponse.statusCode !== 200) {
             return res.status(uploadResponse.statusCode).json({
@@ -261,6 +262,7 @@ export const uploadBlogThumbnailApi = asyncHandler(async (req, res) => {
             });
         }
 
+        // ✅ Save the new thumbnail URL
         blog.thumbnailUrl = uploadResponse.data.secure_url;
         await blog.save();
 

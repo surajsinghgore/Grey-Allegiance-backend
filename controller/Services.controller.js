@@ -1,5 +1,5 @@
 import Service from "../models/Services.model.js";
-import { uploadServiceImageToCloudinary, uploadThumbnailToCloudinary } from "../utils/cloudinarySetup..js";
+import { uploadServiceImageToCloudinary } from "../utils/cloudinarySetup..js";
 
 export const createService = async (req, res) => {
     try {

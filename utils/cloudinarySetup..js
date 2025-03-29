@@ -139,51 +139,32 @@ export const uploadResumeToCloudinary = async (localFilePath) => {
 };
 
 
-export const uploadThumbnailToCloudinary = async (localFilePath) => {
-  if (!localFilePath) {
-    return { statusCode: 400, message: "Invalid file path provided." };
+export const uploadThumbnailToCloudinary = async (file) => {
+  if (!file || !file.buffer) {
+    return { statusCode: 400, message: "Invalid file provided." };
   }
 
   const allowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
-  const fileExtension = path.extname(localFilePath).toLowerCase();
+  const fileExtension = path.extname(file.originalname).toLowerCase();
 
-  // Check if the file format is allowed
   if (!allowedExtensions.includes(fileExtension)) {
     return { statusCode: 400, message: "Invalid file format. Only JPG, PNG, GIF, and WEBP files are allowed." };
   }
 
-  const uniqueFilename = generateUniqueFilename(localFilePath);
-  const fileWithUniqueName = path.join(path.dirname(localFilePath), uniqueFilename);
-
-  if (checkFileExists(fileWithUniqueName)) {
-    return { statusCode: 409, message: `File with the name ${uniqueFilename} already exists locally.` };
-  }
-
-  try {
-    fs.renameSync(localFilePath, fileWithUniqueName);
-
-    const response = await cloudinary.uploader.upload(fileWithUniqueName, {
-      resource_type: "image", // Ensures only images are uploaded
-      folder: "greyAllegiance/thumbnails",
-    });
-
-    fs.unlinkSync(fileWithUniqueName); // Remove the local file after upload
-
-    return { statusCode: 200, message: "Thumbnail uploaded successfully.", data: response };
-  } catch (error) {
-    console.error("Error uploading thumbnail to Cloudinary:", error);
-
-    // Cleanup: Remove temporary file if upload fails
-    try {
-      if (fs.existsSync(fileWithUniqueName)) {
-        fs.unlinkSync(fileWithUniqueName);
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: "image", folder: "greyAllegiance/thumbnails" },
+      (error, result) => {
+        if (error) {
+          console.error("Error uploading thumbnail to Cloudinary:", error);
+          return reject({ statusCode: 500, message: "Error uploading thumbnail to Cloudinary.", error: error.message });
+        }
+        resolve({ statusCode: 200, message: "Thumbnail uploaded successfully.", data: result });
       }
-    } catch (unlinkError) {
-      console.error("Error removing temporary file:", unlinkError);
-    }
+    );
 
-    return { statusCode: 500, message: "Error uploading thumbnail to Cloudinary.", error: error.message };
-  }
+    stream.end(file.buffer); 
+  });
 };
 
 
@@ -208,6 +189,6 @@ export const uploadServiceImageToCloudinary = async (file) => {
       }
     );
 
-    stream.end(file.buffer); // Send the file buffer to Cloudinary
+    stream.end(file.buffer); 
   });
 };
