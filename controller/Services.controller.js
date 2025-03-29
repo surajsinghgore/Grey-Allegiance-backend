@@ -1,5 +1,8 @@
 import Service from "../models/Services.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadServiceImageToCloudinary } from "../utils/cloudinarySetup..js";
+import { getPublicIdFromUrl } from "../utils/Halper.js";
+import { v2 as cloudinary } from "cloudinary";
 
 export const createService = async (req, res) => {
     try {
@@ -175,3 +178,67 @@ export const getServiceById = async (req, res) => {
     }
 };
 
+
+
+export const uploadServiceImageApi = asyncHandler(async (req, res) => {
+    try {
+        if (req.user?.permission !== "all") {
+            return res.status(403).json({ message: "You do not have permission to create a service" });
+        }
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload a service image.",
+            });
+        }
+
+        const { serviceId } = req.query;
+
+        if (!serviceId) {
+            return res.status(400).json({
+                success: false,
+                message: "Service ID is required to update the image.",
+            });
+        }
+
+        const service = await Service.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({
+                success: false,
+                message: "Service not found.",
+            });
+        }
+
+        if (service.imageUrl) {
+            const publicId = getPublicIdFromUrl(service.imageUrl);
+            await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+        }
+
+        const uploadResponse = await uploadServiceImageToCloudinary(req.file);
+
+        if (uploadResponse.statusCode !== 200) {
+            return res.status(uploadResponse.statusCode).json({
+                success: false,
+                message: uploadResponse.message,
+                error: uploadResponse.error,
+            });
+        }
+
+        service.imageUrl = uploadResponse.data.secure_url;
+        await service.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Service image updated successfully.",
+            imageUrl: uploadResponse.data.secure_url,
+        });
+    } catch (error) {
+        console.error("Error uploading service image: ", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Error in uploading service image.",
+            error: error.message,
+        });
+    }
+});

@@ -219,6 +219,9 @@ export const deleteBlogById = async (req, res) => {
 
 export const uploadBlogThumbnailApi = asyncHandler(async (req, res) => {
     try {
+        if (req.user?.permission !== "all") {
+            return res.status(403).json({ message: "You do not have permission to create a service" });
+        }
         if (!req.file) {
             return res.status(400).json({
                 success: false,
