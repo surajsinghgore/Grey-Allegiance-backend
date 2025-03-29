@@ -30,8 +30,7 @@ const serviceSchema = new mongoose.Schema(
     slotDuration: { type: Number, required: true, min: 1 }, 
     imageUrl: { type: String, trim: true }, 
     status: { type: String, enum: ["active", "inactive"], default: "active" },
-    days: [daySchema], 
-    price: { type: Number, min: 0, default: null }, 
+    days: [daySchema]
   },
   { timestamps: true }
 );

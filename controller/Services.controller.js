@@ -11,7 +11,6 @@ export const createService = async (req, res) => {
         }
 
         const { title, description, slotDuration, status } = req.body;
-        let price = Number(req.body.price);
 
         if (!req.file || !title || !description) {
             return res.status(400).json({ message: "Image, title, and description are required" });
@@ -36,10 +35,7 @@ export const createService = async (req, res) => {
             return res.status(400).json({ message: "Service with this title already exists" });
         }
 
-        // Validate price
-        if (isNaN(price) || price < 0) {
-            return res.status(400).json({ message: "Invalid price, must be a non-negative number" });
-        }
+        
 
         // ✅ Upload Image to Cloudinary using buffer
         const uploadResult = await uploadServiceImageToCloudinary(req.file);
@@ -55,8 +51,7 @@ export const createService = async (req, res) => {
             slotDuration,
             imageUrl: uploadResult.data.secure_url,
             status,
-            days,
-            price
+            days
         });
 
         await newService.save();
