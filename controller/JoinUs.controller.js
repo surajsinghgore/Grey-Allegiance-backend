@@ -50,7 +50,7 @@ export const createJoinUs = async (req, res) => {
         });
 
         await newJoinUs.save();
-        res.status(201).json({ message: "Application submitted successfully", data: newJoinUs });
+        res.status(201).json({ message: "Application submitted successfully" });
     } catch (error) {
         console.error("Error submitting application:", error);
         res.status(500).json({ message: "Server error", error: error.message });
