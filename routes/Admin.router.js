@@ -33,5 +33,5 @@ router.put("/update-role",  AdminVerifyMiddleware,updateAdminValidation, updateA
 router.get("/get-me", AdminVerifyMiddleware, getCurrentAdminInfo);
 
 router.get("/get-all-admin", AdminVerifyMiddleware, getAllAdminsApi);
-router.get("/delete-admin-api", AdminVerifyMiddleware, deleteAdminApi);
+router.delete("/delete-admin-api/:id", AdminVerifyMiddleware, deleteAdminApi);
 export default router;
