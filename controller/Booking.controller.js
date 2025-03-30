@@ -170,13 +170,24 @@ export const getAvailableSlots = async (req, res) => {
             return res.status(404).json({ message: "Service not found" });
         }
 
-        // Get the day name from the provided date (e.g., "Monday")
-        const dayName = new Date(date).toLocaleDateString("en-US", { weekday: "long" });
+        // ✅ Check if the service is active
+        if (service.status !== "active") {
+            return res.status(400).json({ message: "Service is not available for booking" });
+        }
 
-        // Find service availability for that specific day
+        // Convert date to standard format
+        const bookingDateObj = new Date(date);
+        if (isNaN(bookingDateObj.getTime())) {
+            return res.status(400).json({ message: "Invalid date format" });
+        }
+
+        // ✅ Get the day name from the provided date (e.g., "Monday")
+        const dayName = bookingDateObj.toLocaleDateString("en-US", { weekday: "long" });
+
+        // ✅ Check if the selected day is available & active
         const serviceDay = service.days.find(day => day.name === dayName);
-        if (!serviceDay || serviceDay.status === "inactive") {
-            return res.status(400).json({ message: "Service is not available on this day" });
+        if (!serviceDay || serviceDay.status !== "active") {
+            return res.status(400).json({ message: `Service is not available on ${dayName}` });
         }
 
         // Extract opening and closing times
@@ -189,7 +200,7 @@ export const getAvailableSlots = async (req, res) => {
             return res.status(400).json({ message: "Invalid slot duration for this service" });
         }
 
-        // Generate all possible time slots
+        // ✅ Generate all possible time slots
         let availableSlots = [];
         let currentHour = openHour;
         let currentMin = openMin;
@@ -203,26 +214,26 @@ export const getAvailableSlots = async (req, res) => {
             }
         }
 
-        // Get all booked slots for the given service and date (excluding cancelled bookings)
+        // ✅ Get all booked slots for the given service and date (excluding cancelled bookings)
         const bookedSlots = await Booking.find({ serviceId, bookingDate: date, status: { $ne: "cancelled" } });
 
-        // Remove booked slots considering each booked duration
+        // ✅ Remove booked slots considering each booked duration
         bookedSlots.forEach(booking => {
             const [bookedHour, bookedMin] = booking.bookingTime.split(":").map(Number);
-            const bookedStartTime = bookedHour * 60 + bookedMin; // Convert to minutes
-            const bookedEndTime = bookedStartTime + booking.bookedDuration; // Use booked duration dynamically
+            const bookedStartTime = bookedHour * 60 + bookedMin;
+            const bookedEndTime = bookedStartTime + booking.bookedDuration;
 
             availableSlots = availableSlots.filter(slot => {
                 const [slotHour, slotMin] = slot.split(":").map(Number);
-                const slotTime = slotHour * 60 + slotMin; // Convert to minutes
+                const slotTime = slotHour * 60 + slotMin;
                 return slotTime < bookedStartTime || slotTime >= bookedEndTime;
             });
         });
 
-        // Return available slots along with the selected date
+        // ✅ Return available slots along with the selected date
         res.status(200).json({ 
             message: "Available slots retrieved", 
-            selectedDate: date, // ✅ Added selected date in response
+            selectedDate: date, 
             availableSlots 
         });
     } catch (error) {
@@ -230,6 +241,7 @@ export const getAvailableSlots = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 export const getAllBookings = async (req, res) => {
