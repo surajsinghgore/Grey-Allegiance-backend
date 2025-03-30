@@ -23,12 +23,33 @@ export const createBooking = async (req, res) => {
             return res.status(404).json({ message: "Service not found" });
         }
 
+        // ✅ Check if the service is active
+        if (service.status !== "active") {
+            return res.status(400).json({ message: "Service is not available for booking" });
+        }
+
+        // Convert bookingDate to a standard format
+        const bookingDateObj = new Date(bookingDate);
+        if (isNaN(bookingDateObj.getTime())) {
+            return res.status(400).json({ message: "Invalid booking date format." });
+        }
+        const formattedBookingDate = bookingDateObj.toISOString().split("T")[0];
+
+        // ✅ Get the day name from the bookingDate
+        const dayName = bookingDateObj.toLocaleDateString("en-US", { weekday: "long" });
+
+        // ✅ Check if the selected day is available & active
+        const selectedDay = service.days.find(day => day.name === dayName);
+        if (!selectedDay || selectedDay.status !== "active") {
+            return res.status(400).json({ message: `Service is not available on ${dayName}` });
+        }
+
         // Validate slot duration
         if (!bookedDuration || bookedDuration <= 0 || bookedDuration % service.slotDuration !== 0) {
             return res.status(400).json({ message: "Invalid booked duration. Must be a multiple of slot duration." });
         }
 
-        // Calculate total price if service has a price per slot
+        // Calculate total price
         let totalPrice = 0;
         if (service.price) {
             totalPrice = (bookedDuration / service.slotDuration) * service.price;
@@ -40,32 +61,31 @@ export const createBooking = async (req, res) => {
             return res.status(400).json({ message: "Invalid booking time format. Use HH:mm format." });
         }
 
-        // Convert bookingDate to standard format (YYYY-MM-DD)
-        const bookingDateObj = new Date(bookingDate);
-        if (isNaN(bookingDateObj.getTime())) {
-            return res.status(400).json({ message: "Invalid booking date format." });
-        }
-        const formattedBookingDate = bookingDateObj.toISOString().split("T")[0];
-
-        // Convert bookingTime to minutes for easy comparison
+        // Convert bookingTime to minutes for comparison
         const [startHour, startMinute] = bookingTime.split(":").map(Number);
         const newBookingStart = startHour * 60 + startMinute;
         const newBookingEnd = newBookingStart + bookedDuration;
 
-        // Check if any existing booking overlaps with the new booking time
+        // ✅ Check if the selected time is within allowed hours
+        const [openHour, openMinute] = selectedDay.openingTiming.split(":").map(Number);
+        const [closeHour, closeMinute] = selectedDay.closeTiming.split(":").map(Number);
+        const openTime = openHour * 60 + openMinute;
+        const closeTime = closeHour * 60 + closeMinute;
+
+        if (newBookingStart < openTime || newBookingEnd > closeTime) {
+            return res.status(400).json({ message: `Booking time must be within ${selectedDay.openingTiming} - ${selectedDay.closeTiming}` });
+        }
+
+        // ✅ Check for overlapping bookings
         const existingBookings = await Booking.find({ serviceId, bookingDate: formattedBookingDate });
 
         for (const booking of existingBookings) {
-            // Skip cancelled bookings (allow rebooking)
-            if (booking.status === "cancelled") {
-                continue;
-            }
+            if (booking.status === "cancelled") continue;
 
             const [existingHour, existingMinute] = booking.bookingTime.split(":").map(Number);
             const existingStart = existingHour * 60 + existingMinute;
-            const existingEnd = existingStart + booking.bookedDuration; // Use stored booked duration
+            const existingEnd = existingStart + booking.bookedDuration;
 
-            // Overlap condition
             if (newBookingStart < existingEnd && newBookingEnd > existingStart) {
                 return res.status(400).json({ 
                     message: `Time slot overlaps with an existing booking from ${booking.bookingTime} for ${booking.bookedDuration} minutes`
@@ -73,13 +93,13 @@ export const createBooking = async (req, res) => {
             }
         }
 
-        // Create new booking
+        // ✅ Create new booking
         const newBooking = new Booking({
             serviceId,
             bookingDate: formattedBookingDate,
             bookingTime,
             bookedDuration,
-            totalPrice, // Save calculated price
+            totalPrice,
             name,
             email,
             mobile,
@@ -97,6 +117,7 @@ export const createBooking = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 
