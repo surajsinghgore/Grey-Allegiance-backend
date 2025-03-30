@@ -85,10 +85,7 @@ export const updateServiceById = async (req, res) => {
             return res.status(400).json({ message: "Updating _id is not allowed" });
         }
 
-        // Validate price if provided
-        if (updateFields.price !== undefined && (typeof updateFields.price !== "number" || updateFields.price < 0)) {
-            return res.status(400).json({ message: "Invalid price, must be a non-negative number" });
-        }
+   
 
         // Validate days array if provided
         if (updateFields.days && (!Array.isArray(updateFields.days) || updateFields.days.length === 0)) {
@@ -139,8 +136,9 @@ export const getAllServices = async (req, res) => {
             return res.status(404).json({ message: "No services found" });
         }
 
-        // Renaming slotDuration to slotsAvailable in the response
+        // Renaming slotDuration to slotsAvailable and including _id in the response
         const formattedServices = services.map(service => ({
+            _id: service._id, // Include _id
             imageUrl: service.imageUrl,
             title: service.title,
             description: service.description,
@@ -154,6 +152,7 @@ export const getAllServices = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 export const getServiceById = async (req, res) => {
