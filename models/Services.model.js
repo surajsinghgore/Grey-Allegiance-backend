@@ -20,7 +20,7 @@ const daySchema = new mongoose.Schema({
       message: (props) => `${props.value} is not a valid time format (HH:mm)`,
     },
   },
-  status: { type: String, enum: ["active", "inactive"], default: "inactive" },
+  status: { type: String, enum: ["active", "inactive"], default: "active" },
 });
 
 const serviceSchema = new mongoose.Schema(
