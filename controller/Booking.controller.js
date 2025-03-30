@@ -198,7 +198,12 @@ export const getAvailableSlots = async (req, res) => {
             });
         });
 
-        res.status(200).json({ message: "Available slots retrieved", availableSlots });
+        // Return available slots along with the selected date
+        res.status(200).json({ 
+            message: "Available slots retrieved", 
+            selectedDate: date, // ✅ Added selected date in response
+            availableSlots 
+        });
     } catch (error) {
         console.error("Error:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
