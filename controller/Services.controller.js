@@ -162,6 +162,34 @@ export const getAllServices = async (req, res) => {
     }
 };
 
+export const getAllServicesClient = async (req, res) => {
+    try {
+        // ✅ Fetch only active services
+        const services = await Service.find(
+            { status: "active" }, // Filter: Only active services
+            "imageUrl title description slotDuration price status"
+        );
+
+        if (!services || services.length === 0) {
+            return res.status(404).json({ message: "No active services found" });
+        }
+
+        // ✅ Format response (renaming slotDuration to slotsAvailable)
+        const formattedServices = services.map(service => ({
+            _id: service._id, // Include _id
+            imageUrl: service.imageUrl,
+            title: service.title,
+            description: service.description,
+            slotsAvailable: service.slotDuration, // Renamed field
+            price: service.price
+        }));
+
+        res.status(200).json({ message: "Active services retrieved successfully", services: formattedServices });
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
 
 
 export const getServiceById = async (req, res) => {

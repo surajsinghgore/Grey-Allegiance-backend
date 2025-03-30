@@ -2,7 +2,7 @@ import express from "express";
 
 import { AdminVerifyMiddleware } from "../middlewares/AdminVerify.middleware.js";
 import { createServiceValidation } from "../validators/Service.validator.js";
-import { createService, deleteServiceById, getAllServices, getServiceById, updateServiceById, uploadServiceImageApi } from "../controller/Services.controller.js";
+import { createService, deleteServiceById, getAllServices, getAllServicesClient, getServiceById, updateServiceById, uploadServiceImageApi } from "../controller/Services.controller.js";
 import { upload } from "../middlewares/mutlerMiddleware.js";
 import { validationResult } from "express-validator";
 import multer from "multer";
@@ -97,6 +97,7 @@ router.patch(
 router.put("/services/:id", AdminVerifyMiddleware, updateServiceById);
 router.delete("/services/:id", AdminVerifyMiddleware, deleteServiceById);
 router.get("/services", getAllServices);
+router.get("/services-client", getAllServicesClient);
 router.get("/services/:id", getServiceById);
 
 
