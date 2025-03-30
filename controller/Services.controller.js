@@ -68,42 +68,51 @@ export const createService = async (req, res) => {
 
 export const updateServiceById = async (req, res) => {
     try {
-        if (req.user?.permission !== "all") {
-            return res.status(403).json({ message: "You do not have permission to update a service" });
-        }
-
         const { id } = req.params;
         const updateFields = req.body;
-
-        // Validate that at least one field is provided for update
-        if (!updateFields || Object.keys(updateFields).length === 0) {
-            return res.status(400).json({ message: "At least one field must be provided for update" });
+        if (req.user?.permission !== "all") {
+            return res.status(403).json({ message: "You do not have permission to delete a service" });
         }
-
         // Prevent updating _id directly
         if (updateFields._id) {
             return res.status(400).json({ message: "Updating _id is not allowed" });
         }
 
-   
+        // Check if the new name already exists (ignoring the current service)
+        if (updateFields.title) {
+            const existingService = await Service.findOne({
+                title: updateFields.title,
+                _id: { $ne: id } // Ignore the current service
+            });
 
-        // Validate days array if provided
-        if (updateFields.days && (!Array.isArray(updateFields.days) || updateFields.days.length === 0)) {
-            return res.status(400).json({ message: "Days array cannot be empty" });
+            if (existingService) {
+                return res.status(400).json({ message: "A service with this name already exists" });
+            }
         }
 
-        const updatedService = await Service.findByIdAndUpdate(id, updateFields, { new: true, runValidators: true });
+        // Validate days array if provided
+        if (updateFields.days && !Array.isArray(updateFields.days)) {
+            return res.status(400).json({ message: "Days must be an array" });
+        }
+
+        // Perform the update
+        const updatedService = await Service.findByIdAndUpdate(
+            id,
+            { $set: updateFields },  // Allows updating any field
+            { new: true, runValidators: true }
+        );
 
         if (!updatedService) {
             return res.status(404).json({ message: "Service not found" });
         }
 
-        res.status(200).json({ message: "Service updated successfully"});
+        res.status(200).json({ message: "Service updated successfully", service: updatedService });
     } catch (error) {
         console.error("Error:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 export const deleteServiceById = async (req, res) => {
