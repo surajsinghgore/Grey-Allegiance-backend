@@ -70,7 +70,6 @@ export const updateServiceById = async (req, res) => {
     try {
         const { id } = req.params;
         const updateFields = req.body;
-        console.log(updateFields)
         if (req.user?.permission !== "all") {
             return res.status(403).json({ message: "You do not have permission to delete a service" });
         }
