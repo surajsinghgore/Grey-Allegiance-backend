@@ -61,10 +61,11 @@ export const createBlog = async (req, res) => {
 
 export const getAllBlogs = async (req, res) => {
     try {
-        // Fetch all blogs with 'active' status, sorted by publishDate in descending order, excluding 'author' and 'status' fields
-        const blogs = await Blog.find({ status: 'active' }) // Filter blogs by 'active' status
-            .sort({ publishDate: -1 }) // Sort by publishDate in descending order
-            .select('-author -status'); // Exclude both 'author' and 'status' fields from the result
+       
+        const blogs = await Blog.find({ status: 'active' }) 
+            .sort({ publishDate: -1 }) 
+            .populate('author', 'name email') 
+            .select('-status'); 
 
         res.status(200).json({
             message: "Blogs fetched successfully",
@@ -75,6 +76,7 @@ export const getAllBlogs = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 export const getBlogById = async (req, res) => {
