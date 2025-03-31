@@ -165,8 +165,13 @@ export const getCurrentUserActivity = async (req, res) => {
     try {
         const userId = req.user._id; // Assuming req.user contains authenticated user details
 
-        // Fetch the user's bookings
-        const bookings = await Booking.find({ email: req.user.email }).sort({ createdAt: -1 });
+        // Fetch user's bookings and populate only _id and title from service details
+        const bookings = await Booking.find({ email: req.user.email })
+            .populate({
+                path: 'serviceId', // Assuming 'serviceId' is the reference field in Booking
+                select: '_id title' // Only include _id and title from the Service model
+            })
+            .sort({ createdAt: -1 });
 
         // Fetch the user's join requests
         const joinRequests = await JoinUs.find({ email: req.user.email }).sort({ createdAt: -1 });
@@ -174,17 +179,13 @@ export const getCurrentUserActivity = async (req, res) => {
         // Fetch the user's quote requests
         const quoteRequests = await RequestQuote.find({ email: req.user.email }).sort({ createdAt: -1 });
 
-        // Fetch the user's service details
-        const service = await Service.findOne({ userId: userId });
-
-        // Return the response with all user activities and service details
+        // Return the response with all user activities
         res.status(200).json({
             message: "User activity fetched successfully",
             data: {
-                bookings,
+                bookings, // Now includes only _id and title for service details
                 joinRequests,
-                quoteRequests,
-                service, // Adding service details to the response
+                quoteRequests
             }
         });
     } catch (error) {
@@ -195,6 +196,7 @@ export const getCurrentUserActivity = async (req, res) => {
         });
     }
 };
+
 
 
 export const getCurrentActiveUserData = async (req, res) => {
