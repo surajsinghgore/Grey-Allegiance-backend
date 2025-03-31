@@ -246,28 +246,50 @@ export const getAvailableSlots = async (req, res) => {
 
 export const getAllBookings = async (req, res) => {
     try {
-        // Optional: You can add filters such as status, date range, etc. For now, we fetch all bookings
         const { status, startDate, endDate } = req.query;
 
         // Build the filter object
         let filter = {};
 
         if (status) {
-            filter.status = status; // Filter by booking status if provided
+            filter.status = status;
         }
 
         if (startDate && endDate) {
-            filter.bookingDate = { $gte: new Date(startDate), $lte: new Date(endDate) }; // Filter by date range if provided
+            filter.bookingDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
         }
 
-        // Fetch bookings with optional filters
-        const bookings = await Booking.find(filter).populate('serviceId', 'name').sort({ bookingDate: -1 }); // Sort by latest booking date
+        // Fetch bookings with only required fields
+        const bookings = await Booking.find(filter)
+            .populate('serviceId', 'title') // Fetch only the 'title' of the service
+            .populate('clientId', 'name email mobile') // Fetch client details
+            .select('_id clientId date time status bookedDuration city pincode') // Select only required fields
+            .sort({ bookingDate: -1 });
 
         if (bookings.length === 0) {
             return res.status(404).json({ message: "No bookings found" });
         }
 
-        res.status(200).json({ message: "Bookings retrieved successfully", bookings });
+        // Transform the data to return required fields in a structured format
+        const formattedBookings = bookings.map(booking => ({
+            _id: booking._id,
+            clientId: booking.clientId?._id || null,
+            clientName: booking.clientId?.name || "N/A",
+            clientEmail: booking.clientId?.email || "N/A",
+            mobile: booking.clientId?.mobile || "N/A",
+            serviceTitle: booking.serviceId?.title || "N/A",
+            date: booking.date,
+            time: booking.time,
+            status: booking.status,
+            bookedDuration: booking.bookedDuration,
+            city: booking.city,
+            pincode: booking.pincode
+        }));
+
+        res.status(200).json({
+            message: "Bookings retrieved successfully",
+            bookings: formattedBookings
+        });
     } catch (error) {
         console.error("Error:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
