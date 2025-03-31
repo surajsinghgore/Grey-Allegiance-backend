@@ -61,11 +61,10 @@ export const createBlog = async (req, res) => {
 
 export const getAllBlogs = async (req, res) => {
     try {
-       
         const blogs = await Blog.find({ status: 'active' }) 
             .sort({ publishDate: -1 }) 
-            .populate('author', 'name email') 
-            .select('-status'); 
+            .populate('author', 'name email') // Fetch only 'name' and 'email' from author
+            .select('_id title author slug thumbnailUrl publishDate views'); // Select only required fields
 
         res.status(200).json({
             message: "Blogs fetched successfully",
@@ -76,6 +75,7 @@ export const getAllBlogs = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 
