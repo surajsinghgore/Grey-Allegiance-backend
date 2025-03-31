@@ -251,25 +251,32 @@ export const getAllBookings = async (req, res) => {
         // Build the filter object dynamically
         let filter = {};
         if (status) filter.status = status;
+
         if (startDate && endDate) {
-            filter.bookingDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
+            filter.bookingDate = { 
+                $gte: new Date(`${startDate}T00:00:00.000Z`), 
+                $lte: new Date(`${endDate}T23:59:59.999Z`) // Ensure full day range
+            };
+        } else if (startDate) {
+            filter.bookingDate = { 
+                $gte: new Date(`${startDate}T00:00:00.000Z`), 
+                $lte: new Date(`${startDate}T23:59:59.999Z`) // Ensure full day is included
+            };
+        } else if (endDate) {
+            filter.bookingDate = { $lte: new Date(`${endDate}T23:59:59.999Z`) };
         }
 
-        // Fetch bookings directly (no need to populate clientId since data is already in booking)
         const bookings = await Booking.find(filter)
-            .populate('serviceId', 'title') // Fetch only the 'title' of the service
-            .select('_id serviceId bookingDate bookingTime bookedDuration name email mobile address city pincode totalPrice country status createdAt updatedAt') // Select required fields
+            .populate('serviceId', 'title')
+            .select('_id serviceId bookingDate bookingTime bookedDuration name email mobile address city pincode totalPrice country status createdAt updatedAt')
             .sort({ bookingDate: -1 });
 
-        if (bookings.length === 0) {
-            return res.status(404).json({ message: "No bookings found" });
-        }
-
-        // Transform the data
+       
+        // Format the data
         const formattedBookings = bookings.map(booking => ({
             _id: booking._id,
             serviceTitle: booking.serviceId?.title || "N/A",
-            bookingDate: booking.bookingDate,
+            bookingDate: booking.bookingDate.toISOString().split("T")[0], // Convert to YYYY-MM-DD
             bookingTime: booking.bookingTime,
             bookedDuration: booking.bookedDuration,
             name: booking.name,
@@ -293,6 +300,7 @@ export const getAllBookings = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 

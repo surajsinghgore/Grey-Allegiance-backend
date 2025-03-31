@@ -61,8 +61,8 @@ export const getAllJoinUsRequests = async (req, res) => {
     try {
         const { status } = req.query;
 
-       
-        const filter = status ? { status } : { status: "pending" };
+        // If status is provided, filter by status. Otherwise, retrieve all requests.
+        const filter = status ? { status } : {}; 
 
         const joinUsRequests = await JoinUs.find(filter).sort({ appliedDate: 1, appliedTime: 1 });
 
@@ -75,6 +75,7 @@ export const getAllJoinUsRequests = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 export const getPendingJoinUsRequests = async (req, res) => {
@@ -102,7 +103,7 @@ export const updateJoinUsStatus = async (req, res) => {
         const { status } = req.body; 
 
         // Allowed statuses
-        const validStatuses = ["pending", "confirmed", "cancelled"];
+        const validStatuses = ["pending", "completed", "rejected"];
 
         // Check if status is valid
         if (!validStatuses.includes(status)) {
