@@ -248,42 +248,41 @@ export const getAllBookings = async (req, res) => {
     try {
         const { status, startDate, endDate } = req.query;
 
-        // Build the filter object
+        // Build the filter object dynamically
         let filter = {};
-
-        if (status) {
-            filter.status = status;
-        }
-
+        if (status) filter.status = status;
         if (startDate && endDate) {
             filter.bookingDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
         }
 
-        // Fetch bookings with only required fields
+        // Fetch bookings directly (no need to populate clientId since data is already in booking)
         const bookings = await Booking.find(filter)
             .populate('serviceId', 'title') // Fetch only the 'title' of the service
-            .populate('clientId', 'name email mobile') // Fetch client details
-            .select('_id clientId date time status bookedDuration city pincode') // Select only required fields
+            .select('_id serviceId bookingDate bookingTime bookedDuration name email mobile address city pincode totalPrice country status createdAt updatedAt') // Select required fields
             .sort({ bookingDate: -1 });
 
         if (bookings.length === 0) {
             return res.status(404).json({ message: "No bookings found" });
         }
 
-        // Transform the data to return required fields in a structured format
+        // Transform the data
         const formattedBookings = bookings.map(booking => ({
             _id: booking._id,
-            clientId: booking.clientId?._id || null,
-            clientName: booking.clientId?.name || "N/A",
-            clientEmail: booking.clientId?.email || "N/A",
-            mobile: booking.clientId?.mobile || "N/A",
             serviceTitle: booking.serviceId?.title || "N/A",
-            date: booking.date,
-            time: booking.time,
-            status: booking.status,
+            bookingDate: booking.bookingDate,
+            bookingTime: booking.bookingTime,
             bookedDuration: booking.bookedDuration,
+            name: booking.name,
+            email: booking.email,
+            mobile: booking.mobile,
+            address: booking.address,
             city: booking.city,
-            pincode: booking.pincode
+            pincode: booking.pincode,
+            totalPrice: booking.totalPrice,
+            country: booking.country,
+            status: booking.status,
+            createdAt: booking.createdAt,
+            updatedAt: booking.updatedAt
         }));
 
         res.status(200).json({
@@ -295,6 +294,8 @@ export const getAllBookings = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+
 
 export const getBookingById = async (req, res) => {
     try {
