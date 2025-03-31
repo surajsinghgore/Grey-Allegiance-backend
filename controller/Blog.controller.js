@@ -83,8 +83,10 @@ export const getBlogById = async (req, res) => {
     try {
         const blogId = req.params.id;
 
-        // Find the blog by ID and exclude 'author' field
-        const blog = await Blog.findById(blogId).select('-author');
+        // Find the blog by ID, populate author details (name, email), and select only required fields
+        const blog = await Blog.findById(blogId)
+            .populate("author", "name email") // Fetch author's name and email
+            .select("slug title views categories thumbnailUrl publishDate content author"); // Include only required fields
 
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
@@ -92,9 +94,7 @@ export const getBlogById = async (req, res) => {
 
         // Increment the 'views' field by 1
         blog.views += 1;
-
-        // Save the updated blog with incremented views count
-        await blog.save();
+        await blog.save(); // Save updated view count
 
         res.status(200).json({
             message: "Blog fetched successfully",
@@ -105,6 +105,7 @@ export const getBlogById = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 export const getAllBlogsAdmin = async (req, res) => {
     try {
         // Fetch all blogs sorted by publishDate in descending order, including all statuses (active and inactive)
