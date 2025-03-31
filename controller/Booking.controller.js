@@ -278,7 +278,6 @@ export const getAllBookings = async (req, res) => {
             address: booking.address,
             city: booking.city,
             pincode: booking.pincode,
-            totalPrice: booking.totalPrice,
             country: booking.country,
             status: booking.status,
             createdAt: booking.createdAt,
