@@ -163,7 +163,7 @@ export const changePassword = async (req, res) => {
 
 export const getCurrentUserActivity = async (req, res) => {
     try {
-        const userId = req.user._id; // Assuming the user's data is in req.user after successful auth
+        const userId = req.user._id; // Assuming req.user contains authenticated user details
 
         // Fetch the user's bookings
         const bookings = await Booking.find({ email: req.user.email }).sort({ createdAt: -1 });
@@ -174,13 +174,17 @@ export const getCurrentUserActivity = async (req, res) => {
         // Fetch the user's quote requests
         const quoteRequests = await RequestQuote.find({ email: req.user.email }).sort({ createdAt: -1 });
 
-        // Return the data in the response
+        // Fetch the user's service details
+        const service = await Service.findOne({ userId: userId });
+
+        // Return the response with all user activities and service details
         res.status(200).json({
             message: "User activity fetched successfully",
             data: {
                 bookings,
                 joinRequests,
-                quoteRequests
+                quoteRequests,
+                service, // Adding service details to the response
             }
         });
     } catch (error) {
