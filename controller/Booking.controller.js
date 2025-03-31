@@ -295,3 +295,29 @@ export const getAllBookings = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+export const getBookingById = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+
+        // Find the booking by ID and populate related fields
+        const booking = await Booking.findById(bookingId)
+            .populate('serviceId') // Fetch full service details
+            .populate('clientId') // Fetch full client details
+            .populate('providerId') // Fetch provider details if applicable
+            .populate('assignedStaff') // If staff is assigned, fetch details
+            .exec();
+
+        if (!booking) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
+        res.status(200).json({
+            message: "Booking retrieved successfully",
+            booking // Returning the full booking object
+        });
+    } catch (error) {
+        console.error("Error fetching booking:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
