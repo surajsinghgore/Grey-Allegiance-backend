@@ -25,7 +25,7 @@ export const generateForgotPasswordEmail = (resetToken) => {
                     </a>
                 </p>
                 <p style="color: #666; font-size: 12px; text-align: center;">
-                    &copy; ${new Date().getFullYear()} Your Company. All rights reserved.
+                    &copy; ${new Date().getFullYear()} Grey Allegiance. All rights reserved.
                 </p>
             </div>
         </div>
