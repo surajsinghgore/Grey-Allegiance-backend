@@ -104,7 +104,29 @@ export const generateJoinUsAdminEmail = ({ name, email, mobile, aboutYou, whyJoi
 };
 
 
-export const generateAdminBookingNotificationEmail = ({ name, email, mobile, serviceName, bookingDate, bookingTime, bookedDuration, totalPrice }) => {
+export const generateAdminBookingNotificationEmail = ({ name, email, mobile, serviceName, bookingDate, bookingTime, bookedDuration }) => {
+    // Convert bookingTime (24-hour) to hours and minutes
+    let [startHour, startMinute] = bookingTime.split(":").map(Number);
+
+    // Calculate end time in 24-hour format
+    let endHour = startHour + Math.floor(bookedDuration / 60);
+    let endMinute = startMinute + (bookedDuration % 60);
+    
+    if (endMinute >= 60) {
+        endHour += 1;
+        endMinute -= 60;
+    }
+
+    // Format time to 12-hour AM/PM format
+    const formatTime = (hour, minute) => {
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const formattedHour = hour % 12 || 12; // Convert 24-hour to 12-hour format
+        const formattedMinute = minute.toString().padStart(2, "0"); // Ensure two-digit minutes
+        return `${formattedHour}:${formattedMinute} ${ampm}`;
+    };
+
+    const bookingDuration = `${formatTime(startHour, startMinute)} - ${formatTime(endHour, endMinute)}`;
+
     return `
         <div style="font-family: Arial, sans-serif; background-color: #e0e0e0; padding: 20px;">
             <div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); border: 1px solid #ccc;">
@@ -120,9 +142,7 @@ export const generateAdminBookingNotificationEmail = ({ name, email, mobile, ser
                     <p style="color: #333; font-size: 16px;"><strong>Mobile:</strong> ${mobile}</p>
                     <p style="color: #333; font-size: 16px;"><strong>Service:</strong> ${serviceName}</p>
                     <p style="color: #333; font-size: 16px;"><strong>Date:</strong> ${bookingDate}</p>
-                    <p style="color: #333; font-size: 16px;"><strong>Time:</strong> ${bookingTime}</p>
-                    <p style="color: #333; font-size: 16px;"><strong>Duration:</strong> ${bookedDuration} minutes</p>
-                    <p style="color: #333; font-size: 16px;"><strong>Total Price:</strong> $${totalPrice}</p>
+                    <p style="color: #333; font-size: 16px;"><strong>Duration:</strong> ${bookingDuration}</p>
                 </div>
 
                 <div style="text-align: center; margin: 20px 0;">
