@@ -1,24 +1,26 @@
+import { sendEmail } from "../handlers/SendEmail.js";
 import Booking from "../models/Booking.model.js";
 import Service from "../models/Services.model.js";
+import { generateAdminBookingNotificationEmail } from "../utils/EmailTemplate/UserTemplate.js";
 
 export const createBooking = async (req, res) => {
     try {
-        const { 
-            serviceId, 
-            bookingDate, 
-            bookingTime, 
-            bookedDuration, 
-            name, 
-            email, 
-            mobile, 
-            address, 
-            city, 
-            pincode, 
-            country 
+        const {
+            serviceId,
+            bookingDate,
+            bookingTime,
+            bookedDuration,
+            name,
+            email,
+            mobile,
+            address,
+            city,
+            pincode,
+            country
         } = req.body;
 
-        // Check if the service exists
-        const service = await Service.findById(serviceId);
+        // ✅ Ensure the service exists and fetch only necessary fields
+        const service = await Service.findById(serviceId).select("title status price slotDuration days");
         if (!service) {
             return res.status(404).json({ message: "Service not found" });
         }
@@ -33,6 +35,14 @@ export const createBooking = async (req, res) => {
         if (isNaN(bookingDateObj.getTime())) {
             return res.status(400).json({ message: "Invalid booking date format." });
         }
+
+        // ✅ Prevent past date bookings
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (bookingDateObj < today) {
+            return res.status(400).json({ message: "You cannot book a service for a past date." });
+        }
+
         const formattedBookingDate = bookingDateObj.toISOString().split("T")[0];
 
         // ✅ Get the day name from the bookingDate
@@ -87,7 +97,7 @@ export const createBooking = async (req, res) => {
             const existingEnd = existingStart + booking.bookedDuration;
 
             if (newBookingStart < existingEnd && newBookingEnd > existingStart) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     message: `Time slot overlaps with an existing booking from ${booking.bookingTime} for ${booking.bookedDuration} minutes`
                 });
             }
@@ -111,7 +121,21 @@ export const createBooking = async (req, res) => {
 
         await newBooking.save();
 
-        res.status(201).json({ message: "Booking created successfully", booking: newBooking });
+        // ✅ Send Email to Admin
+        const adminEmailContent = generateAdminBookingNotificationEmail({
+            name,
+            email,
+            mobile,
+            serviceName: service.title, // ✅ Use 'title' instead of 'name'
+            bookingDate: formattedBookingDate,
+            bookingTime,
+            bookedDuration,
+            totalPrice
+        });
+
+        await sendEmail(process.env.ADMIN_EMAIL, "New Booking Received - Grey Allegiance", adminEmailContent);
+
+        res.status(201).json({ message: "Booking created successfully and emails sent", booking: newBooking });
     } catch (error) {
         console.error("Error:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -121,14 +145,13 @@ export const createBooking = async (req, res) => {
 
 
 
-
 export const updateBookingStatus = async (req, res) => {
     try {
         if (req.user.permission !== "all") {
             return res.status(403).json({ status: false, message: "Forbidden: You do not have permission to update admin roles" });
-          }
-        const { bookingId } = req.params; 
-        const { status } = req.body; 
+        }
+        const { bookingId } = req.params;
+        const { status } = req.body;
 
         // Allowed status values
         const allowedStatuses = ["pending", "confirmed", "cancelled"];
@@ -231,10 +254,10 @@ export const getAvailableSlots = async (req, res) => {
         });
 
         // ✅ Return available slots along with the selected date
-        res.status(200).json({ 
-            message: "Available slots retrieved", 
-            selectedDate: date, 
-            availableSlots 
+        res.status(200).json({
+            message: "Available slots retrieved",
+            selectedDate: date,
+            availableSlots
         });
     } catch (error) {
         console.error("Error:", error.message);
@@ -253,13 +276,13 @@ export const getAllBookings = async (req, res) => {
         if (status) filter.status = status;
 
         if (startDate && endDate) {
-            filter.bookingDate = { 
-                $gte: new Date(`${startDate}T00:00:00.000Z`), 
+            filter.bookingDate = {
+                $gte: new Date(`${startDate}T00:00:00.000Z`),
                 $lte: new Date(`${endDate}T23:59:59.999Z`) // Ensure full day range
             };
         } else if (startDate) {
-            filter.bookingDate = { 
-                $gte: new Date(`${startDate}T00:00:00.000Z`), 
+            filter.bookingDate = {
+                $gte: new Date(`${startDate}T00:00:00.000Z`),
                 $lte: new Date(`${startDate}T23:59:59.999Z`) // Ensure full day is included
             };
         } else if (endDate) {
@@ -271,7 +294,7 @@ export const getAllBookings = async (req, res) => {
             .select('_id serviceId bookingDate bookingTime bookedDuration name email mobile address city pincode totalPrice country status createdAt updatedAt')
             .sort({ bookingDate: -1 });
 
-       
+
         // Format the data
         const formattedBookings = bookings.map(booking => ({
             _id: booking._id,

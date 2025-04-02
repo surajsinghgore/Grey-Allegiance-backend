@@ -1,6 +1,8 @@
 import RequestQuote from "../models/RequestQuote.model.js";
 import { sendEmail } from '../handlers/SendEmail.js';
 import { generateRequestQuoteAdminEmail } from "../utils/EmailTemplate/UserTemplate.js";
+
+
 export const createRequestQuote = async (req, res) => {
     try {
         const { firstName, lastName, mobile, email, location, reasonOfInquiry, message } = req.body;

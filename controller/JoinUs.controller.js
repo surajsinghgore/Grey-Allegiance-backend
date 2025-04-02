@@ -1,6 +1,8 @@
 import JoinUs from "../models/JoinUs.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import { uploadResumeToCloudinary } from "../utils/cloudinarySetup..js";
+import { generateJoinUsAdminEmail } from "../utils/EmailTemplate/UserTemplate.js";
+import { sendEmail } from "../handlers/SendEmail.js";
 
   
 // Create a new JoinUs entry
@@ -37,6 +39,9 @@ export const createJoinUs = async (req, res) => {
             return res.status(400).json({ success: false, message: "Please upload a resume." });
         }
 
+        // ✅ Ensure direct download (Cloudinary fix)
+        const cloudinaryDownloadUrl = resumeUrl.replace("/upload/", "/upload/fl_attachment/");
+
         // Save application in DB
         const newJoinUs = new JoinUs({
             name,
@@ -44,12 +49,25 @@ export const createJoinUs = async (req, res) => {
             mobile,
             aboutYou,
             whyJoinUs,
-            resume: resumeUrl,
+            resume: resumeUrl, // Save normal URL in DB
             appliedDate: new Date().toISOString().split("T")[0],
             appliedTime: new Date().toTimeString().split(" ")[0],
         });
 
         await newJoinUs.save();
+
+        // Send email to admin with direct download link
+        const emailContent = generateJoinUsAdminEmail({
+            name,
+            email,
+            mobile,
+            aboutYou,
+            whyJoinUs,
+            resumeUrl: cloudinaryDownloadUrl, // ✅ Only download, no preview
+        });
+
+        await sendEmail(process.env.ADMIN_EMAIL, "New Join Us Application", emailContent);
+
         res.status(201).json({ message: "Application submitted successfully" });
     } catch (error) {
         console.error("Error submitting application:", error);
