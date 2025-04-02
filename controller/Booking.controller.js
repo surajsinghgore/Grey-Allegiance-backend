@@ -179,7 +179,7 @@ export const updateBookingStatus = async (req, res) => {
 };
 
 
-const getAvailableSlots = async (req, res) => {
+export const getAvailableSlots = async (req, res) => {
     try {
         const { serviceId, date } = req.query;
 
