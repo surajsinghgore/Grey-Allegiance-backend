@@ -204,7 +204,7 @@ export const getAvailableSlots = async (req, res) => {
         // ✅ Fix Past Date Check
         const today = new Date();
         const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Reset time
-        const bookingDateOnly = new Date(bookingDateObj.getFullYear(), bookingDateObj.getMonth(), bookingDateObj.getDate()); 
+        const bookingDateOnly = new Date(bookingDateObj.getFullYear(), bookingDateObj.getMonth(), bookingDateObj.getDate());
 
         if (bookingDateOnly < todayDate) {
             return res.status(400).json({ message: "Cannot book slots for past dates" });
@@ -288,12 +288,12 @@ export const getAllBookings = async (req, res) => {
         if (startDate && endDate) {
             filter.bookingDate = {
                 $gte: new Date(`${startDate}T00:00:00.000Z`),
-                $lte: new Date(`${endDate}T23:59:59.999Z`) 
+                $lte: new Date(`${endDate}T23:59:59.999Z`)
             };
         } else if (startDate) {
             filter.bookingDate = {
                 $gte: new Date(`${startDate}T00:00:00.000Z`),
-                $lte: new Date(`${startDate}T23:59:59.999Z`) 
+                $lte: new Date(`${startDate}T23:59:59.999Z`)
             };
         } else if (endDate) {
             filter.bookingDate = { $lte: new Date(`${endDate}T23:59:59.999Z`) };
@@ -362,3 +362,5 @@ export const getBookingById = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+
