@@ -1,21 +1,19 @@
 import RequestQuote from "../models/RequestQuote.model.js";
-
+import { sendEmail } from '../handlers/SendEmail.js';
+import { generateRequestQuoteAdminEmail } from "../utils/EmailTemplate/UserTemplate.js";
 export const createRequestQuote = async (req, res) => {
     try {
         const { firstName, lastName, mobile, email, location, reasonOfInquiry, message } = req.body;
 
-        // Validate required fields
         if (!firstName || !lastName || !mobile || !email || !location || !reasonOfInquiry || !message) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        // Check for existing pending request with the same email & mobile
         const existingRequest = await RequestQuote.findOne({ email, mobile, status: "pending" });
         if (existingRequest) {
             return res.status(400).json({ message: "You already have a pending request." });
         }
 
-        // Create a new request quote
         const newRequest = new RequestQuote({
             firstName,
             lastName,
@@ -24,10 +22,22 @@ export const createRequestQuote = async (req, res) => {
             location,
             reasonOfInquiry,
             message,
-            status: "pending" // Default status
+            status: "pending" 
         });
 
         await newRequest.save();
+
+        const emailContent = generateRequestQuoteAdminEmail({
+            firstName,
+            lastName,
+            mobile,
+            email,
+            location,
+            reasonOfInquiry,
+            message
+        });
+
+        await sendEmail(process.env.ADMIN_EMAIL, "New Request for Quote", emailContent);
 
         res.status(201).json({ message: "Request submitted successfully", data: newRequest });
     } catch (error) {
