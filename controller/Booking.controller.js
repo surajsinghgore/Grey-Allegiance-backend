@@ -179,7 +179,7 @@ export const updateBookingStatus = async (req, res) => {
 };
 
 
-export const getAvailableSlots = async (req, res) => {
+const getAvailableSlots = async (req, res) => {
     try {
         const { serviceId, date } = req.query;
 
@@ -213,11 +213,15 @@ export const getAvailableSlots = async (req, res) => {
             return res.status(400).json({ message: `Service is not available on ${dayName}` });
         }
 
-        // Extract opening and closing times
+        // Extract opening and closing times (use UTC methods to avoid timezone issues)
         const [openHour, openMin] = serviceDay.openingTiming.split(":").map(Number);
         const [closeHour, closeMin] = serviceDay.closeTiming.split(":").map(Number);
 
-        // Extract slot duration from service
+        // Adjust for UTC if needed
+        const openUTC = new Date(Date.UTC(0, 0, 0, openHour, openMin));
+        const closeUTC = new Date(Date.UTC(0, 0, 0, closeHour, closeMin));
+
+        // Extract slot duration from service (must be a multiple of 60 minutes)
         const slotDuration = service.slotDuration;
         if (!slotDuration || slotDuration <= 0) {
             return res.status(400).json({ message: "Invalid slot duration for this service" });
@@ -225,11 +229,16 @@ export const getAvailableSlots = async (req, res) => {
 
         // ✅ Generate all possible time slots
         let availableSlots = [];
-        let currentHour = openHour;
-        let currentMin = openMin;
+        let currentHour = openUTC.getUTCHours();
+        let currentMin = openUTC.getUTCMinutes();
 
-        while (currentHour < closeHour || (currentHour === closeHour && currentMin < closeMin)) {
-            availableSlots.push(`${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`);
+        // Ensure time slots are in multiples of the slot duration (for 120 min, slots will be 00:00, 02:00, 04:00, etc.)
+        while (currentHour < closeUTC.getUTCHours() || (currentHour === closeUTC.getUTCHours() && currentMin < closeUTC.getUTCMinutes())) {
+            // Only add slots in increments of the slot duration
+            if (currentMin % slotDuration === 0) {
+                availableSlots.push(`${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`);
+            }
+
             currentMin += slotDuration;
             if (currentMin >= 60) {
                 currentHour += 1;
@@ -264,6 +273,7 @@ export const getAvailableSlots = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 
