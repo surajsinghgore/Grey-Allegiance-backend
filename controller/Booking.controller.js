@@ -198,8 +198,18 @@ export const getAvailableSlots = async (req, res) => {
             return res.status(400).json({ message: "Service is not available for booking" });
         }
 
-        // Convert date to standard format
-        const bookingDateObj = new Date(date);
+        // ✅ Fix Date Parsing Issue
+        const bookingDateObj = new Date(`${date}T00:00:00Z`); // Ensure correct UTC parsing
+
+        // ✅ Fix Past Date Check
+        const today = new Date();
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Reset time
+        const bookingDateOnly = new Date(bookingDateObj.getFullYear(), bookingDateObj.getMonth(), bookingDateObj.getDate()); 
+
+        if (bookingDateOnly < todayDate) {
+            return res.status(400).json({ message: "Cannot book slots for past dates" });
+        }
+
         if (isNaN(bookingDateObj.getTime())) {
             return res.status(400).json({ message: "Invalid date format" });
         }
@@ -278,12 +288,12 @@ export const getAllBookings = async (req, res) => {
         if (startDate && endDate) {
             filter.bookingDate = {
                 $gte: new Date(`${startDate}T00:00:00.000Z`),
-                $lte: new Date(`${endDate}T23:59:59.999Z`) // Ensure full day range
+                $lte: new Date(`${endDate}T23:59:59.999Z`) 
             };
         } else if (startDate) {
             filter.bookingDate = {
                 $gte: new Date(`${startDate}T00:00:00.000Z`),
-                $lte: new Date(`${startDate}T23:59:59.999Z`) // Ensure full day is included
+                $lte: new Date(`${startDate}T23:59:59.999Z`) 
             };
         } else if (endDate) {
             filter.bookingDate = { $lte: new Date(`${endDate}T23:59:59.999Z`) };
