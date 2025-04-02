@@ -276,7 +276,6 @@ const getAvailableSlots = async (req, res) => {
 
 
 
-
 export const getAllBookings = async (req, res) => {
     try {
         const { status, startDate, endDate } = req.query;
