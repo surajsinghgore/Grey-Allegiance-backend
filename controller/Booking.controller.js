@@ -228,7 +228,7 @@ export const getAvailableSlots = async (req, res) => {
         let currentTime = openHour * 60 + openMin; // Convert opening time to minutes
         const closeTime = closeHour * 60 + closeMin; // Convert closing time to minutes
 
-        while (currentTime < closeTime) { 
+        while (currentTime <= closeTime) {  // ✅ Ensure it reaches the last slot
             let slotHour = Math.floor(currentTime / 60);
             let slotMin = currentTime % 60;
 
@@ -264,6 +264,7 @@ export const getAvailableSlots = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 export const getAllBookings = async (req, res) => {
